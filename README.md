@@ -36,4 +36,5 @@ To bypass standard GitHub API rate limits:
 
 ## FAQ
 * Why don't you provide a pre-made token?: I can't it's against github's rule and github will most likely revoke access so please create your own.
-* How to run this 24/7?: Open task scheduler and create a basic task. Select every time I log on in triggers and choose start a program in action and select the watcher.exe 
+* How to run this 24/7?: Open task scheduler and create a basic task. Select every time I log on in triggers and choose start a program in action and select the watcher.exe
+* Also, while choosing the watcher.exe there will be an option to add start-in. here, paste the path where the watcher.exe is, not the path to exe but path to the folder where it is otherwise it will fail, as to why? Because watcher.exe doesn't run as admministrator and because of this, it can't create or store files in System32, to fix that we have to add this start-in and also we don't want to store files in System32 as it all will be scattered around.
