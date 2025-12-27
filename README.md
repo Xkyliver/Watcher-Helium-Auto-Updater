@@ -16,7 +16,7 @@
 3. **Execution:** Run the executable. An icon will appear in your System Tray(same icon as helium).
     * You scanned the .exe file with Virustotal and a few vendors said its mailicous? It is not. when a new version is downloaded, watcher asks to kill chrome.exe(helium is chrome.exe) and run the latest installer and that triggers these false positiives
 
-## Rate Limit Management (Required if you don't want to run into issues)
+## Rate Limit Management (Required if you don't want to run into issues after a few hours)
 
 To bypass standard GitHub API rate limits:
 1. Create a file named token.txt in the same directory as the executable.
