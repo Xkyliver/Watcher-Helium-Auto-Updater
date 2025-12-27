@@ -1,5 +1,5 @@
 # Watcher: Helium Auto-Updater
-   * Note: Unofficial and only for x64 Windows
+   * Note: Unofficial and works ~only~ for x64 and arm64 Windows
 
 ## Features
 
@@ -53,7 +53,7 @@ The Architect: Hosts a local Flask web server on port 9000 to render the dashboa
 The Interface: Manages the System Tray icon and Windows context menu interactions.
 
 ### 2. The Logic Loop
-GitHub Patrol (Every 10 Minutes): Igris queries the GitHub API for the "Latest Release" tag.
+GitHub Patrol (Every 10 Minutes): Watcher queries the GitHub API for the "Latest Release" tag.
 
 Rate Limit Bypass: If a token.txt file is detected, it utilizes the provided Personal Access Token to increase API limits (from 60/hr to 5000/hr).
 
@@ -61,7 +61,7 @@ Local Integrity Scan (Every 10 Seconds): It verifies the contents of your local 
 
 If the installer corresponding to the latest known version is missing, a retrieval is triggered immediately.
 
-This ensures that if an installer is accidentally deleted, Igris restores it instantly.
+This ensures that if an installer is accidentally deleted, Watcher restores it instantly.
 
 ### 3. The Purge Protocol
 Updating software while it is running often leads to file corruption or lock errors.
@@ -77,7 +77,7 @@ Once the path is clear, the new installer is launched automatically and Helium i
 ### 4. Dual-Logging System
 Watcher maintains two separate archives for redundancy:
 
-The Database (igris_v2.db): An SQLite database storing structured logs. This powers the Web Dashboard, enabling session grouping and the sidebar interface.
+The Database (Watcher_v2.db): An SQLite database storing structured logs. This powers the Web Dashboard, enabling session grouping and the sidebar interface.
 
 Physical Archives (/logs/*.txt): Raw text files generated for every session, ensuring data is accessible even without the web interface.
 
@@ -93,7 +93,7 @@ Upon initialization, the tool establishes the following domain:
 
 Watcher.exe (The core application)
 
-igris_v2.db (The log database)
+Watcher_v2.db (The log database)
 
 view_logs.html (Dashboard shortcut)
 
