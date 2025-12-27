@@ -11,6 +11,7 @@ import subprocess
 import psutil
 import sqlite3
 import webbrowser
+import platform
 from datetime import datetime
 from flask import Flask, render_template_string, request
 from win10toast_persist import ToastNotifier
@@ -25,9 +26,19 @@ LOCAL_CHECK_INTERVAL = 10
 TARGET_DIR = os.getcwd()
 VERSION_FILE = os.path.join(TARGET_DIR, "last_version.txt")
 TOKEN_FILE = os.path.join(TARGET_DIR, "token.txt")
-DB_FILE = os.path.join(TARGET_DIR, "igris_v2.db")
+DB_FILE = os.path.join(TARGET_DIR, "watcher_v2.db")
 REDIRECT_FILE = os.path.join(TARGET_DIR, "view_logs.html")
 WEB_PORT = 9000
+
+# --- Auto-Detect Architecture ---
+def get_target_arch_string():
+    """Detects system architecture to decide which installer to hunt."""
+    arch = platform.machine().lower()
+    if "arm" in arch or "aarch64" in arch:
+        return "arm64-installer.exe"
+    return "x64-installer.exe"
+
+SEARCH_STR = get_target_arch_string()
 
 # --- Physical Log Setup ---
 LOGS_DIR = os.path.join(TARGET_DIR, "logs")
@@ -35,8 +46,8 @@ if not os.path.exists(LOGS_DIR):
     os.makedirs(LOGS_DIR)
 
 # Generate Session Identifiers
-SESSION_ID = datetime.now().strftime("%b %d • %H:%M") # For Sidebar
-SESSION_FILENAME = datetime.now().strftime("igris_%Y-%m-%d_%H-%M.txt") # For Text File
+SESSION_ID = datetime.now().strftime("%b %d • %H:%M")
+SESSION_FILENAME = datetime.now().strftime("watcher_%Y-%m-%d_%H-%M.txt")
 TXT_LOG_PATH = os.path.join(LOGS_DIR, SESSION_FILENAME)
 
 def resource_path(relative_path):
@@ -49,7 +60,7 @@ def resource_path(relative_path):
 ICON_PATH = resource_path("icon.png")
 
 # --- Globals ---
-status_text = "Igris: Standing Guard"
+status_text = f"Watcher: Checking for new releases({SEARCH_STR.split('-')[0]})"
 icon = None
 toaster = ToastNotifier()
 app = Flask(__name__)
@@ -64,12 +75,11 @@ def init_db():
     conn.close()
 
 def log_event(level, message):
-    """Scribes event to BOTH Database (Web) and Text File (Physical)."""
     now = datetime.now()
     date_str = now.strftime("%Y-%m-%d")
     time_str = now.strftime("%H:%M:%S")
     
-    # 1. Write to Database (For Web UI)
+    # DB Write
     try:
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
@@ -79,7 +89,7 @@ def log_event(level, message):
         conn.close()
     except: pass
 
-    # 2. Write to Text File (For Folder Archive)
+    # Txt Write
     try:
         with open(TXT_LOG_PATH, "a", encoding="utf-8") as f:
             f.write(f"[{date_str} {time_str}] [{level}] {message}\n")
@@ -91,7 +101,7 @@ HTML_TEMPLATE = """
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Igris Chronicles</title>
+    <title>Watcher Chronicles</title>
     <style>
         :root { --sidebar-width: 280px; --accent: #9b59b6; --bg: #121212; --panel: #1e1e1e; --text: #e0e0e0; }
         body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; height: 100vh; display: flex; overflow: hidden; }
@@ -134,7 +144,7 @@ HTML_TEMPLATE = """
 <body>
     <div class="sidebar">
         <div class="sidebar-header">
-            <h1>Igris Logs</h1>
+            <h1>Watcher Logs</h1>
         </div>
         <ul class="session-list">
             {% for sess in sessions %}
@@ -228,7 +238,7 @@ def kill_processes():
 
 def prompt_install(filepath):
     msg = "Helium download complete.\n\nRun installer now?\n\nWARNING: This will kill Chrome & Helium."
-    res = ctypes.windll.user32.MessageBoxW(0, msg, "Igris Decree", 0x04 | 0x30 | 0x40000)
+    res = ctypes.windll.user32.MessageBoxW(0, msg, "Watcher Decree", 0x04 | 0x30 | 0x40000)
     if res == 6: 
         kill_processes()
         log_event("SUCCESS", f"Launching installer: {filepath}")
@@ -268,7 +278,7 @@ def download_file(url, filename, version):
                         if icon: icon.title = status_text
                         last_upd = now
 
-        status_text = "Igris: Standing Guard"
+        status_text = f"Watcher: Checking for new releases ({SEARCH_STR.split('-')[0]})"
         if icon: icon.title = status_text
         log_event("SUCCESS", f"Download secured: {filename}")
         send_alert("Success", f"Helium {version} Ready.")
@@ -276,12 +286,12 @@ def download_file(url, filename, version):
         return True
     except Exception as e:
         log_event("ERROR", f"Download failed: {str(e)}")
-        status_text = "Igris: Error"
+        status_text = "Watcher: Error"
         if icon: icon.title = status_text
         return False
 
 def monitor_logic():
-    log_event("INFO", f"Igris Session Initialized ({SESSION_ID}).")
+    log_event("INFO", f"Watcher Session Initialized ({SESSION_ID}). Target: {SEARCH_STR}")
     last_check = 0
     cached_v, cached_n, cached_u = None, None, None
     
@@ -292,17 +302,20 @@ def monitor_logic():
             if (cached_v is None) or (curr - last_check > GITHUB_CHECK_INTERVAL):
                 log_event("INFO", "Scanning GitHub...")
                 url = f"https://api.github.com/repos/{REPO}/releases/latest"
-                head = {'User-Agent': 'Igris'}
+                head = {'User-Agent': 'Watcher'}
                 tk = get_token()
                 if tk: head['Authorization'] = f'token {tk}'
                 r = requests.get(url, headers=head, timeout=15, verify=False)
                 if r.status_code == 200:
                     d = r.json()
-                    ast = next((a for a in d.get('assets', []) if "x64-installer.exe" in a['name']), None)
+                    # THIS IS THE CRITICAL CHANGE: Uses SEARCH_STR variable
+                    ast = next((a for a in d.get('assets', []) if SEARCH_STR in a['name']), None)
                     if ast:
                         cached_v, cached_n, cached_u = d['tag_name'], ast['name'], ast['browser_download_url']
                         last_check = curr
-                        log_event("INFO", f"Latest Intel: {cached_v}")
+                        log_event("INFO", f"Latest Intel: {cached_v} (Asset: {cached_n})")
+                    else:
+                        log_event("WARNING", f"Version found {d['tag_name']}, but no asset matched '{SEARCH_STR}'")
                 elif r.status_code == 403:
                     log_event("WARNING", "Rate Limit Hit. Cooling down.")
                     time.sleep(300)
@@ -346,7 +359,7 @@ def setup_tray():
         pystray.MenuItem("Quit", on_quit)
     )
     
-    icon = pystray.Icon("Igris", img, title=status_text, menu=menu)
+    icon = pystray.Icon("Watcher", img, title=status_text, menu=menu)
     icon.run()
 
 if __name__ == "__main__":
