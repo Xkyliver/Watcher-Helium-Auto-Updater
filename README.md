@@ -5,7 +5,7 @@
 
 * **Real-Time HUD:** Monitor download speed and estimated time of arrival (ETA) by hovering over the System Tray icon.
 * **Integrity Guard:** Scans the local directory every 10 seconds. If a version installer is missing, it is immediately re-downloaded.
-* **Purge Protocol:** Optional automated termination of chrome.exe and Helium processes to ensure the installer can run without file-lock errors.
+* **Purge Protocol:** Optional automated termination of chrome.exe(as the process name for Helium is chrome.exe) and Helium processes to ensure the installer can run and update Helium.
 * **Session Chronicles:** Unique log files are generated for every session and stored in a dedicated /logs folder.
 * **Background Operation:** Runs as a persistent background process in the System Tray to avoid taskbar clutter.
 
@@ -18,7 +18,7 @@
 
 ## Rate Limit Management (Required if you don't want to run into issues after a few hours)
 
-To bypass standard GitHub API rate limits:
+Because this script checks for new releases every 10 minutes and every 10 seconds if the latest version is downlaoded, Github adds a rate limit. To bypass standard GitHub API rate limits we need to create a personal access token:
 1. Create a file named token.txt in the same directory as the executable.
 2. Paste a GitHub Personal Access Token into this file.
     * Steps to create a personal access token:
@@ -31,7 +31,8 @@ To bypass standard GitHub API rate limits:
 
 ## System Tray Menu
 
-* **Open Logs:** Opens the directory containing all session logs.
+* **Open Local Logs:** Opens the directory containing all session logs.
+*  **Open Web Dashboard:** Opens a web-page contaning all the logs
 * **Quit:** Terminates the watcher process.
 
 ## FAQ
