@@ -1,5 +1,5 @@
 # Watcher: Helium Auto-Updater
-   * Note: Unofficial and works ~only~ for x64 and arm64 Windows
+   * Note: Unofficial and works ~only~ for x64 and arm64 Windows and also made with AI
 
 ## Features
 
